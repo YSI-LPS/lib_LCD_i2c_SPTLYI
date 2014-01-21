@@ -1,3 +1,32 @@
+/** LCD i2c SPTLYI class
+*  Utilisée pour écrire sur l'afficheur i2c SPTLYI 2x16.
+*
+* Copyright (c) 2014, cstyles (http://mbed.org)
+*
+* Exemple:
+* @code
+* #include "mbed.h"
+* #include "lib_LCD_i2c_SPTLYI.h"
+*
+* LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
+* 
+* int main() {
+* int i=0;
+*   while(1)
+*   {
+*       LCD.clear();
+*       LCD.print(i++);
+*       if(i>9999) i=0;
+*       wait(0.25);
+*   }
+* }
+* @endcode
+* @file          lib_LCD_i2c_SPTLYI.h 
+* @purpose       library for i2c LCD
+* @date          Jan 2014
+* @author        Yannic Simon
+*/
+
 #include "lib_LCD_i2c_SPTLYI.h"
 
 #define I2C_Frequency 600000

@@ -1,6 +1,8 @@
 /** LCD i2c SPTLYI class
 *  Utilisée pour écrire sur l'afficheur i2c SPTLYI 2x16.
 *
+* Copyright (c) 2014, cstyles (http://mbed.org)
+*
 * Exemple:
 * @code
 * #include "mbed.h"
@@ -19,6 +21,10 @@
 *   }
 * }
 * @endcode
+* @file          lib_LCD_i2c_SPTLYI.h 
+* @purpose       library for i2c LCD
+* @date          Jan 2014
+* @author        Yannic Simon
 */
 
 #ifndef DEF_lib_LCD_i2c_SPTLYI_H
