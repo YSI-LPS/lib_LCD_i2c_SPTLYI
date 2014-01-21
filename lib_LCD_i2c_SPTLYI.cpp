@@ -1,5 +1,27 @@
 #include "lib_LCD_i2c_SPTLYI.h"
 
+#define I2C_Frequency 600000
+#define Interrupts_OFF __disable_irq();    // Disable Interrupts
+#define Interrupts_ON __enable_irq();     // Enable Interrupts
+#define Last_Controle_Byte 0x00
+#define First_Controle_Byte 0x80
+#define Register_Select_CByte 0x40
+#define Function_Set_IS0 0x38
+#define Function_Set_IS1 0x39
+#define Shift_Right_Cursor_Set 0x14
+#define Shift_Left_Cursor_Set 0x10
+#define Contrast_Set 0x79
+#define Power_Icon_Set 0x50
+#define Follower_Controle_Set 0x6F
+#define Entry_Mode_Set 0x04
+#define Display_ON_Set 0x0F
+#define Display_OFF_Set 0x08
+#define Cursor_ON_Set 0x0F
+#define Cursor_OFF_Set 0x0C
+#define Clear_Display 0x01
+#define Return_Home 0x02
+
+
 
 LCD_I2C::LCD_I2C(PinName pin_sda, PinName pin_scl, PinName pin_rst, int address) : I2C(pin_sda, pin_scl), m_pin_rst(pin_rst), m_address(address)
 {
@@ -9,12 +31,12 @@ LCD_I2C::LCD_I2C(PinName pin_sda, PinName pin_scl, PinName pin_rst, int address)
 
 int LCD_I2C::init(void)
 {
-    I2C::frequency(600000);
+    I2C::frequency(I2C_Frequency);
 
-    char data[12]={0x80,0x38,0x00,0x39,0x14,0x79,0x50,0x6F,0x0F,0x01,0x02,0x04};
-    __disable_irq();    // Disable Interrupts
+    char data[12]={First_Controle_Byte,Function_Set_IS0,Last_Controle_Byte,Function_Set_IS1,Shift_Right_Cursor_Set,Contrast_Set,Power_Icon_Set,Follower_Controle_Set,Display_ON_Set,Clear_Display,Return_Home,Entry_Mode_Set};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 12);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     wait_ms(1);
     return ack;
 }
@@ -29,249 +51,344 @@ void LCD_I2C::reset(void)
 
 int LCD_I2C::clear(void)
 {
-    char data[2]={0x00,0x01};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,Clear_Display};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
+    X_position_cursor = 0;
+    Y_position_cursor = 0;
     wait_ms(1);
     return ack;
 }
 
 int LCD_I2C::turn_on_cursor(void)
 {
-    char data[2]={0x00,0x0F};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,Cursor_ON_Set};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
 int LCD_I2C::turn_off_cursor(void)
 {
-    char data[2]={0x00,0x0C};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,Cursor_OFF_Set};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
 int LCD_I2C::turn_on_display(void)
 {
-    char data[2]={0x00,0x0F};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,Display_ON_Set};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
 int LCD_I2C::turn_off_display(void)
 {
-    char data[2]={0x00,0x08};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,Display_OFF_Set};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
 int LCD_I2C::return_home_cursor(void)
 {
-    char data[2]={0x00,0x02};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,Return_Home};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
+    X_position_cursor = 0;
+    Y_position_cursor = 0;
     return ack;
 }
 
 void LCD_I2C::shift_left_cursor(int n)
 {
-    char data[3]={0x00,0x38,0x10};
+    char data[3]={Last_Controle_Byte,Function_Set_IS0,Shift_Left_Cursor_Set};
     int i=0;
     for(i=0;i<n;i++)
     {
-        __disable_irq();    // Disable Interrupts
+        Interrupts_OFF
         I2C::write(m_address, &data[0], 3);
-        __enable_irq();     // Enable Interrupts
+        Interrupts_ON
     }
+    X_move_position(-n);
 }
 
 void LCD_I2C::shift_right_cursor(int n)
 {
-    char data[3]={0x00,0x38,0x14};
+    char data[3]={Last_Controle_Byte,Function_Set_IS0,Shift_Right_Cursor_Set};
     int i=0;
     for(i=0;i<n;i++)
     {
-        __disable_irq();    // Disable Interrupts
+        Interrupts_OFF
         I2C::write(m_address, &data[0], 3);
-        __enable_irq();     // Enable Interrupts
+        Interrupts_ON
     }
+    X_move_position(n);
 }
 
 int LCD_I2C::shift_line_cursor(void)
 {
-    char data[4]={0x00,0x38,0x40,0xC0};
-    __disable_irq();    // Disable Interrupts
+    char data[4]={Last_Controle_Byte,Function_Set_IS0,0x40+0x00,0x80+0x40};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 4);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
+    X_position_cursor = 0;
+    Y_position_cursor = 1;
     return ack;
 }
 
-int LCD_I2C::set_position_cursor(int position)
+int LCD_I2C::set_position_cursor(int X)
 {
     int CGRAM=0x00;
     int DDRAM=0x00;
-
-    if(position < 0x00)
+    
+    if(X < 0)    X = 0;
+    if(X > 39)   X = 39;    //0x27
+    
+    
+    if(Y_position_cursor == 1)
     {
-        CGRAM = 0x00;
-        DDRAM = 0x00;
+        CGRAM = X + 39;     //0x27
+        DDRAM = X + 64;     //0x40
     }else{
-        if(position > 0x7F)
-        {
-            CGRAM = 0x7F;
-            DDRAM = 0x67;
-        }else{
-            CGRAM = position;
-            if(position > 0x27)
-            {
-                DDRAM = (position - 0x27) + 0x3F;
-            }else{
-                DDRAM = position;
-            }
-        }
+        CGRAM = X;
+        DDRAM = X;
     }
-    char data[4]={0x00,0x38,0x40+CGRAM,0x80+DDRAM};
-    __disable_irq();    // Disable Interrupts
+
+    X_position_cursor = X;
+
+    char data[4]={Last_Controle_Byte,Function_Set_IS0,0x40+CGRAM,0x80+DDRAM};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 4);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
+    return ack;
+}
+
+int LCD_I2C::set_position_cursor(int X, int Y)
+{
+    int CGRAM=0x00;
+    int DDRAM=0x00;
+    
+    if(X < 0)    X = 0;
+    if(X > 39)   X = 39;    //0x27
+    if(Y < 0)    Y = 0;
+    if(Y > 1)    Y = 1;
+    
+    if(Y == 1)
+    {
+        CGRAM = X + 39;     //0x27
+        DDRAM = X + 64;     //0x40
+    }else{
+        CGRAM = X;
+        DDRAM = X;
+    }
+
+    X_position_cursor = X;
+    Y_position_cursor = Y;
+
+    char data[4]={Last_Controle_Byte,Function_Set_IS0,0x40+CGRAM,0x80+DDRAM};
+    Interrupts_OFF
+    int ack = I2C::write(m_address, &data[0], 4);
+    Interrupts_ON
     return ack;
 }
 
 void LCD_I2C::shift_left_display(int n)
 {
-    char data[3]={0x00,0x38,0x18};
+    char data[3]={Last_Controle_Byte,Function_Set_IS0,0x18};
     int i=0;
     for(i=0;i<n;i++)
     {
-        __disable_irq();    // Disable Interrupts
+        Interrupts_OFF
         I2C::write(m_address, &data[0], 3);
-        __enable_irq();     // Enable Interrupts
+        Interrupts_ON
     }
 }
 
 void LCD_I2C::shift_right_display(int n)
 {
-    char data[3]={0x00,0x38,0x1C};
+    char data[3]={Last_Controle_Byte,Function_Set_IS0,0x1C};
     int i=0;
     for(i=0;i<n;i++)
     {
-        __disable_irq();    // Disable Interrupts
+        Interrupts_OFF
         I2C::write(m_address, &data[0], 3);
-        __enable_irq();     // Enable Interrupts
+        Interrupts_ON
     }
 }
 
 int LCD_I2C::enable_auto_shift_right_display(void)
 {
-    char data[2]={0x00,0x05};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,0x05};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
 int LCD_I2C::enable_auto_shift_left_display(void)
 {
-    char data[2]={0x00,0x07};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,0x07};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
 int LCD_I2C::disable_auto_shift_display(void)
 {
-    char data[2]={0x00,0x06};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,0x06};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
 int LCD_I2C::auto_shift_right_cursor(void)
 {
-    char data[2]={0x00,0x06};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,0x06};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
 int LCD_I2C::auto_shift_left_cursor(void)
 {
-    char data[2]={0x00,0x04};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Last_Controle_Byte,0x04};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
+}
+
+void LCD_I2C::X_move_position(int n)
+{
+    X_position_cursor += n;
+    while(X_position_cursor > 39)
+    {
+        X_position_cursor -= 40;
+        Y_position_cursor += 1;
+        if(Y_position_cursor == 2) Y_position_cursor = 0;
+    }
+    while(X_position_cursor < 0)
+    {
+        X_position_cursor += 40;
+        Y_position_cursor -= 1;
+        if(Y_position_cursor == -1) Y_position_cursor = 1;
+    }
+}
+
+int LCD_I2C::get_X_position_cursor(void)
+{
+    return X_position_cursor;
+}
+
+int LCD_I2C::get_Y_position_cursor(void)
+{
+    return Y_position_cursor;
 }
 
 int LCD_I2C::putnc(char *s,int n)
 {
     int ack=0, i=0;
     char data[n+1];
-    data[0]=0x40;
+    data[0]=Register_Select_CByte;
     for(i=0;i<n;i++)    data[i+1]=s[i];
-    __disable_irq();    // Disable Interrupts
+    Interrupts_OFF
     ack = I2C::write(m_address, &data[0], n+1);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;  
 }
 
 int LCD_I2C::print(char c)
 {
-    char data[2]={0x40,c};
-    __disable_irq();    // Disable Interrupts
+    char data[2]={Register_Select_CByte,c};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 2);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
 int LCD_I2C::print(char c1, char c2)
 {
-    char data[3]={0x40,c1,c2};
-    __disable_irq();    // Disable Interrupts
+    char data[3]={Register_Select_CByte,c1,c2};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 3);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
 int LCD_I2C::print(char c1, char c2, char c3)
 {
-    char data[4]={0x40,c1,c2,c3};
-    __disable_irq();    // Disable Interrupts
+    char data[4]={Register_Select_CByte,c1,c2,c3};
+    Interrupts_OFF
     int ack = I2C::write(m_address, &data[0], 4);
-    __enable_irq();     // Enable Interrupts
+    Interrupts_ON
     return ack;
 }
 
-int LCD_I2C::print(char *s)
+int LCD_I2C::print(short nb)
 {
-    int ack=0, i=0, n=0;
-    while(s[n]!='\0') n++;
-    char data[n+1];
-    data[0]=0x40;
-    for(i=0;i<n;i++)    data[i+1]=s[i];
-    __disable_irq();    // Disable Interrupts
-    ack = I2C::write(m_address, &data[0], n+1);
-    __enable_irq();     // Enable Interrupts
-    return ack;  
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],"%d",nb);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(unsigned short nb)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],"%u",nb);
+    return putnc(&buffer[0],n);
 }
 
 int LCD_I2C::print(int nb)
 {
     int n=0;
     char buffer[100]={0x00};
-    n = sprintf(&buffer[0],"%d\0",nb);
+    n = sprintf(&buffer[0],"%d",nb);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(unsigned int nb)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],"%u",nb);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(long long nb)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],"%lld",nb);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(unsigned long long nb)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],"%llu",nb);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(float nb)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],"%f",nb);
     return putnc(&buffer[0],n);
 }
 
@@ -279,7 +396,900 @@ int LCD_I2C::print(double nb)
 {
     int n=0;
     char buffer[100]={0x00};
-    n = sprintf(&buffer[0],"%.2f\0",nb);
+    n = sprintf(&buffer[0],"%lf",nb);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s)
+{
+    int ack=0, i=0, n=0;
+    while(s[n]!='\0') n++;
+    char data[n+1];
+    data[0]=Register_Select_CByte;
+    for(i=0;i<n;i++)    data[i+1]=s[i];
+    Interrupts_OFF
+    ack = I2C::write(m_address, &data[0], n+1);
+    Interrupts_ON
+    return ack;  
+}
+
+int LCD_I2C::print(char *s, short nb)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, unsigned short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, unsigned int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, unsigned long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, float nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, double nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, short nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, short nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, unsigned short nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, unsigned short nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, short nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, short nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned short nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, short nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, int nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, int nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, short nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, short nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, int nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, short nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, unsigned int nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, unsigned int nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, short nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, short nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned int nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, short nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, long long nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, long long nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, short nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, short nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, long long nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, short nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, unsigned long long nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, unsigned long long nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, short nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, short nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned long long nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, short nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, float nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, float nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, short nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, short nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, float nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, short nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, double nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, short nb1, double nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, short nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, short nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, double nb2, short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, unsigned short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, unsigned short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, float nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, unsigned short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, double nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, unsigned short nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned short nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned short nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, int nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, int nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, unsigned short nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, unsigned short nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, int nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned short nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned int nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned int nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned short nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned short nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned int nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned short nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, long long nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, long long nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, unsigned short nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, unsigned short nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, long long nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned short nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned long long nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned long long nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned short nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned short nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned long long nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned short nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, float nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, float nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, unsigned short nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, unsigned short nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, float nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, unsigned short nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, double nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned short nb1, double nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, unsigned short nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, unsigned short nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, double nb2, unsigned short nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
     return putnc(&buffer[0],n);
 }
 
@@ -291,15 +1301,71 @@ int LCD_I2C::print(char *s, int nb)
     return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, double nb)
+int LCD_I2C::print(char *s, int nb1, int nb2)
 {
     int n=0;
     char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb);
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
     return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, int nb1, int nb2)
+int LCD_I2C::print(char *s, int nb1, unsigned int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, unsigned long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, float nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, int nb2)
 {
     int n=0;
     char buffer[100]={0x00};
@@ -323,15 +1389,239 @@ int LCD_I2C::print(char *s, double nb1, int nb2)
     return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, double nb1, double nb2)
+int LCD_I2C::print(char *s, int nb1, int nb2, int nb3)
 {
     int n=0;
     char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
     return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, double nb1, double nb2, double nb3)
+int LCD_I2C::print(char *s, int nb1, int nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, unsigned int nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, unsigned int nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, int nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, int nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned int nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, int nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, long long nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, long long nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, int nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, int nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, long long nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, int nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, unsigned long long nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, unsigned long long nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, int nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, int nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned long long nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, int nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, float nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, float nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, int nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, int nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, float nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, int nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, double nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, int nb1, double nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, int nb2, int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, int nb2, double nb3)
 {
     int n=0;
     char buffer[100]={0x00};
@@ -347,365 +1637,764 @@ int LCD_I2C::print(char *s, double nb1, double nb2, int nb3)
     return putnc(&buffer[0],n);
 }
 
-
-int LCD_I2C::print(char *s, double nb1, int nb2, double nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    return putnc(&buffer[0],n);
-}
-
-
-int LCD_I2C::print(char *s, double nb1, int nb2, int nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    return putnc(&buffer[0],n);
-}
-
-
-int LCD_I2C::print(char *s, int nb1, double nb2, double nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    return putnc(&buffer[0],n);
-}
-
-
-int LCD_I2C::print(char *s, int nb1, double nb2, int nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    return putnc(&buffer[0],n);
-}
-
-
-int LCD_I2C::print(char *s, int nb1, int nb2, double nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    return putnc(&buffer[0],n);
-}
-
-
-int LCD_I2C::print(char *s, int nb1, int nb2, int nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    return putnc(&buffer[0],n);
-}
-
-int LCD_I2C::print(char *s, char c1)
-{
-    int ack=0, i=0, n=0;
-    while(s[n]!='\0') n++;
-    char data[n+2];
-    data[0]=0x40;
-    for(i=0;i<n;i++)    data[i+1]=s[i];
-    data[n+1]=c1;
-    __disable_irq();    // Disable Interrupts
-    ack = I2C::write(m_address, &data[0], n+2);
-    __enable_irq();     // Enable Interrupts
-    return ack;  
-}
-
-int LCD_I2C::print(char *s, char c1, int nb)
+int LCD_I2C::print(char *s, unsigned int nb)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, double nb)
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, unsigned int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, float nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, unsigned int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, double nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, unsigned int nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned int nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned int nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, long long nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, long long nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, unsigned int nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, unsigned int nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, long long nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned int nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned long long nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned long long nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned int nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned int nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned long long nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned int nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, float nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, float nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, unsigned int nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, unsigned int nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, float nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, unsigned int nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, double nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned int nb1, double nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, unsigned int nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, unsigned int nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, double nb2, unsigned int nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, int nb1, int nb2)
+int LCD_I2C::print(char *s, long long nb1, long long nb2)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, int nb1, double nb2)
+int LCD_I2C::print(char *s, long long nb1, unsigned long long nb2)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, double nb1, int nb2)
+int LCD_I2C::print(char *s, unsigned long long nb1, long long nb2)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, double nb1, double nb2)
+int LCD_I2C::print(char *s, long long nb1, float nb2)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, double nb1, double nb2, double nb3)
+int LCD_I2C::print(char *s, float nb1, long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, double nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, long long nb2, long long nb3)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, double nb1, double nb2, int nb3)
+int LCD_I2C::print(char *s, long long nb1, long long nb2, unsigned long long nb3)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-
-int LCD_I2C::print(char *s, char c1, double nb1, int nb2, double nb3)
+int LCD_I2C::print(char *s, long long nb1, unsigned long long nb2, long long nb3)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-
-int LCD_I2C::print(char *s, char c1, double nb1, int nb2, int nb3)
+int LCD_I2C::print(char *s, long long nb1, unsigned long long nb2, unsigned long long nb3)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-
-int LCD_I2C::print(char *s, char c1, int nb1, double nb2, double nb3)
+int LCD_I2C::print(char *s, unsigned long long nb1, long long nb2, long long nb3)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-
-int LCD_I2C::print(char *s, char c1, int nb1, double nb2, int nb3)
+int LCD_I2C::print(char *s, unsigned long long nb1, long long nb2, unsigned long long nb3)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-
-int LCD_I2C::print(char *s, char c1, int nb1, int nb2, double nb3)
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned long long nb2, long long nb3)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-
-int LCD_I2C::print(char *s, char c1, int nb1, int nb2, int nb3)
+int LCD_I2C::print(char *s, long long nb1, long long nb2, float nb3)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    return putnc(&buffer[0],n+1);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, char c2)
+int LCD_I2C::print(char *s, long long nb1, float nb2, long long nb3)
 {
-    int ack=0, i=0, n=0;
-    while(s[n]!='\0') n++;
-    char data[n+3];
-    data[0]=0x40;
-    for(i=0;i<n;i++)    data[i+1]=s[i];
-    data[n+1]=c1;
-    data[n+2]=c2;
-    __disable_irq();    // Disable Interrupts
-    ack = I2C::write(m_address, &data[0], n+3);
-    __enable_irq();     // Enable Interrupts
-    return ack;  
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, char c2, int nb)
+int LCD_I2C::print(char *s, long long nb1, float nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, long long nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, long long nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, float nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, long long nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, double nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, long long nb1, double nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, long long nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, long long nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, double nb2, long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, char c2, double nb)
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, float nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, unsigned long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, double nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, unsigned long long nb2)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned long long nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned long long nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, float nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, float nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, unsigned long long nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, unsigned long long nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, float nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, unsigned long long nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, double nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, unsigned long long nb1, double nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, unsigned long long nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, unsigned long long nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, double nb2, unsigned long long nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, char c2, int nb1, int nb2)
+int LCD_I2C::print(char *s, float nb1, float nb2)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, char c2, int nb1, double nb2)
+int LCD_I2C::print(char *s, float nb1, double nb2)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, char c2, double nb1, int nb2)
+int LCD_I2C::print(char *s, double nb1, float nb2)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, char c2, double nb1, double nb2)
+int LCD_I2C::print(char *s, float nb1, float nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, float nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, double nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, float nb1, double nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, float nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, float nb2, double nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, double nb2, float nb3)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb)
+{
+    int n=0;
+    char buffer[100]={0x00};
+    n = sprintf(&buffer[0],&s[0],nb);
+    return putnc(&buffer[0],n);
+}
+
+int LCD_I2C::print(char *s, double nb1, double nb2)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
+    return putnc(&buffer[0],n);
 }
 
-int LCD_I2C::print(char *s, char c1, char c2, double nb1, double nb2, double nb3)
+int LCD_I2C::print(char *s, double nb1, double nb2, double nb3)
 {
     int n=0;
     char buffer[100]={0x00};
     n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
-}
-
-int LCD_I2C::print(char *s, char c1, char c2, double nb1, double nb2, int nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
-}
-
-
-int LCD_I2C::print(char *s, char c1, char c2, double nb1, int nb2, double nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
-}
-
-
-int LCD_I2C::print(char *s, char c1, char c2, double nb1, int nb2, int nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
-}
-
-
-int LCD_I2C::print(char *s, char c1, char c2, int nb1, double nb2, double nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
-}
-
-
-int LCD_I2C::print(char *s, char c1, char c2, int nb1, double nb2, int nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
-}
-
-
-int LCD_I2C::print(char *s, char c1, char c2, int nb1, int nb2, double nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
-}
-
-
-int LCD_I2C::print(char *s, char c1, char c2, int nb1, int nb2, int nb3)
-{
-    int n=0;
-    char buffer[100]={0x00};
-    n = sprintf(&buffer[0],&s[0],nb1,nb2,nb3);
-    buffer[n]=c1;
-    buffer[n+1]=c2;
-    return putnc(&buffer[0],n+2);
+    return putnc(&buffer[0],n);
 }
 
 int LCD_I2C::putnb2(int nb)
