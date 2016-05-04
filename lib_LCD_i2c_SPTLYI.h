@@ -32,7 +32,8 @@
 
 #include "mbed.h"
 
-
+/** LCD_I2C class
+ */
 class LCD_I2C : public I2C
 {
 public:
