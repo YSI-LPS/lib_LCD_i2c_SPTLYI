@@ -1,5 +1,8 @@
 /** LCD i2c SPTLYI class
-*  Utilisée pour écrire sur l'afficheur i2c SPTLYI 2x16.
+*
+* @purpose       library for i2c LCD
+*
+* Utilisée pour écrire sur l'afficheur i2c SPTLYI 2x16.
 *
 * Copyright (c) 2014, cstyles (http://mbed.org)
 *
@@ -10,19 +13,20 @@
 *
 * LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
 * 
-* int main() {
-* int i=0;
+* int main()
+* {
 *   while(1)
 *   {
-*       LCD.clear();
-*       LCD.print(i++);
-*       if(i>9999) i=0;
-*       wait(0.25);
+*       for(int i = 0; i < 9999; i++)
+*       {
+*           LCD.clear();
+*           LCD.print(i);
+*           wait(0.25);
+*       }
 *   }
 * }
 * @endcode
 * @file          lib_LCD_i2c_SPTLYI.h 
-* @purpose       library for i2c LCD
 * @date          Jan 2014
 * @author        Yannic Simon
 */
@@ -31,6 +35,7 @@
 #define DEF_lib_LCD_i2c_SPTLYI_H
 
 #include "mbed.h"
+#include <cstdarg>
 
 /** LCD_I2C class
  */
@@ -47,121 +52,155 @@ public:
     * @returns acknoledge write i2c
     */
     int clear(void);
+    
     /** renvoie le curseur en position X = 0 et Y = 0
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int return_home_cursor(void);
-    /** positionne le curseur sur la ligne
+    
+    /** positionne le curseur sur la ligne (0 à 39)
     *
     * @param X est la position sur la ligne
     * @returns acknoledge write i2c
     */
     int set_position_cursor(int X);
-    /** positionne le curseur horizontalement et verticalement
+    
+    /** positionne le curseur horizontalement (0 à 39) et verticalement (0 à 1)
     *
     * @param X est la position sur la ligne
     * Y est la position sur la colone
     * @returns acknoledge write i2c
     */
     int set_position_cursor(int X, int Y);
+    
     /** renvoie la position horizontale du curseur
     *
     * @param aucun
-    * @returns X est la position sur la ligne (0 à 19)
+    * @returns X est la position sur la ligne (0 à 39)
     */
     int get_X_position_cursor(void);
+    
     /** renvoie la position verticale du curseur
     *
     * @param aucun
-    * @returns Y est la position sur la colone (0 à 3)
+    * @returns Y est la position sur la colone (0 à 1)
     */
     int get_Y_position_cursor(void);
-    /** positionne le curseur à la ligne suivante
+    
+    /** positionne le curseur au début de la ligne suivante
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int shift_line_cursor(void);
+    
     /** active l'affichage du curseur
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int turn_on_cursor(void);
+    
     /** désactive l'affichage du curseur
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int turn_off_cursor(void);
+    
     /** active l'affichage
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int turn_on_display(void);
+    
     /** désactive l'affichage
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int turn_off_display(void);
+    
     /** déplace le curseur vers la gauche
     *
     * @param n est le nombre de déplacement du curseur
     * @returns aucun
     */
     void shift_left_cursor(int n);
+    
     /** déplace le curseur vers la droite
     *
     * @param n est le nombre de déplacement du curseur
     * @returns aucun
     */
     void shift_right_cursor(int n);
+    
     /** déplace l'affichage vers la gauche
     *
     * @param n est le nombre de déplacement de l'affichage
     * @returns aucun
     */
     void shift_left_display(int n);
+    
     /** déplace l'affichage vers la droite
     *
     * @param n est le nombre de déplacement de l'affichage
     * @returns aucun
     */
     void shift_right_display(int n);
+    
     /** active le déplacement automatique de l'affichage vers la droite
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int enable_auto_shift_right_display(void);
+    
     /** active le déplacement automatique de l'affichage vers la gauche
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int enable_auto_shift_left_display(void);
+    
     /** désactive le déplacement automatique de l'affichage
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int disable_auto_shift_display(void);
+    
     /** configure le déplacement automatique du curseur vers la droite
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int auto_shift_right_cursor(void);
+    
     /** configure le déplacement automatique du curseur vers la droite
     *
     * @param aucun
     * @returns acknoledge write i2c
     */
     int auto_shift_left_cursor(void);
+    
+    /** renvoie le caractere se trouvant à la position du curseur
+    *
+    * @returns le caractere se trouvant à position
+    */   
+    char read(void);
+    
+    /** renvoie le caractere se trouvant à la position spécifiée
+    *
+    * @param X est la position sur la ligne
+    * Y est la position sur la colone
+    * @returns le caractere se trouvant à position
+    */   
+    char read(int X, int Y);
+    
     /** affiche la variable sur l'afficheur
     *
     * @param la plupart des types de variables
@@ -179,9 +218,9 @@ public:
     int print(float nb);
     int print(double nb);
     int print(char *s);
+    int print(const char *s, ... );
     
-    
-    int print(char *s, short nb);
+    /*int print(char *s, short nb);
     int print(char *s, short nb1, short nb2);
     int print(char *s, short nb1, unsigned short nb2);
     int print(char *s, unsigned short nb1, short nb2);
@@ -472,7 +511,7 @@ public:
     
     int print(char *s, double nb);
     int print(char *s, double nb1, double nb2);
-    int print(char *s, double nb1, double nb2, double nb3);
+    int print(char *s, double nb1, double nb2, double nb3);*/
     
     
     private:
@@ -485,8 +524,10 @@ public:
     int putnb2(int nb);
     
     void X_move_position(int n);
-    int X_position_cursor;
-    int Y_position_cursor;
+    int X40_position_cursor;
+    int X80_position_cursor;
+    int Y2_position_cursor;
+    char LCD_Data_Register[80];
 };
 
 #endif
