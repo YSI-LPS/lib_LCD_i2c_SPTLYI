@@ -4,6 +4,8 @@
 *
 * Utilisée pour écrire sur l'afficheur i2c SPTLYI 2x16.
 *
+* http://fr.farnell.com/midas/mccog21605b6w-sptlyi/lcd-cog-2x16-stn-vert-b-l-i2c/dp/2063208
+*
 * Copyright (c) 2014, cstyles (http://mbed.org)
 *
 * Exemple:
@@ -43,6 +45,11 @@ class LCD_I2C : public I2C
 {
 public:
     /** Creer une instance LCD_I2C
+    *
+    * @param pin_sda par exemple p28
+    * @param pin_scl par exemple p27
+    * @param pin_rst par exemple p26
+    * @param address par exemple 0x7C
     */
     LCD_I2C(PinName pin_sda, PinName pin_scl, PinName pin_rst, int address);
 
@@ -70,7 +77,7 @@ public:
     /** positionne le curseur horizontalement (0 à 39) et verticalement (0 à 1)
     *
     * @param X est la position sur la ligne
-    * Y est la position sur la colone
+    * @param Y est la position sur la colone
     * @returns acknoledge write i2c
     */
     int set_position_cursor(int X, int Y);
@@ -189,23 +196,27 @@ public:
     
     /** renvoie le caractere se trouvant à la position du curseur
     *
-    * @returns le caractere se trouvant à position
+    * @param aucun
+    * @returns le caractere se trouvant à position du curseur
     */   
     char read(void);
     
     /** renvoie le caractere se trouvant à la position spécifiée
     *
     * @param X est la position sur la ligne
-    * Y est la position sur la colone
-    * @returns le caractere se trouvant à position
+    * @param Y est la position sur la colone
+    * @returns le caractere se trouvant à position X et Y
     */   
     char read(int X, int Y);
     
     /** affiche la variable sur l'afficheur
     *
-    * @param la plupart des types de variables
+    * @param s la chaine de caractère à afficher
+    * @param ... les arguments à afficher
     * @returns acknoledge write i2c
-    */    
+    */
+    int print(const char *s, ... );
+    int print(char *s);
     int print(char c);
     int print(char c1, char c2);
     int print(char c1, char c2, char c3);
@@ -217,8 +228,6 @@ public:
     int print(unsigned long long nb);
     int print(float nb);
     int print(double nb);
-    int print(char *s);
-    int print(const char *s, ... );
     
     /*int print(char *s, short nb);
     int print(char *s, short nb1, short nb2);
