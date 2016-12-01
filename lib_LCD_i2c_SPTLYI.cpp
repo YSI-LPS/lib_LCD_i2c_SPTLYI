@@ -1,6 +1,6 @@
 #include "lib_LCD_i2c_SPTLYI.h"
 
-#define I2C_Frequency 600000
+#define I2C_Frequency 200000
 #define Interrupts_OFF __disable_irq()    // Disable Interrupts
 #define Interrupts_ON __enable_irq()     // Enable Interrupts
 #define Last_Controle_Byte 0x00
@@ -153,8 +153,8 @@ int LCD_I2C::shift_line_cursor(void)
 
 int LCD_I2C::set_position_cursor(int X)
 {
-    int CGRAM=0x00;
-    int DDRAM=0x00;
+    char CGRAM = 0x00;
+    char DDRAM = 0x00;
     
     if(X < 0)       X = 0;
     else if(X > 39) X = 39;
@@ -172,7 +172,10 @@ int LCD_I2C::set_position_cursor(int X)
 
     X40_position_cursor = X;
 
-    char data[4]={Last_Controle_Byte,Function_Set_IS0,0x40+CGRAM,0x80+DDRAM};
+    CGRAM += 0x40;
+    DDRAM += 0x80;
+
+    char data[4]={Last_Controle_Byte,Function_Set_IS0,CGRAM,DDRAM};
     Interrupts_OFF;
     int ack = I2C::write(m_address, data, 4);
     Interrupts_ON;
@@ -181,8 +184,8 @@ int LCD_I2C::set_position_cursor(int X)
 
 int LCD_I2C::set_position_cursor(int X, int Y)
 {
-    int CGRAM=0x00;
-    int DDRAM=0x00;
+    char CGRAM = 0x00;
+    char DDRAM = 0x00;
     
     if(X < 0)       X = 0;
     else if(X > 39) X = 39;
@@ -203,7 +206,10 @@ int LCD_I2C::set_position_cursor(int X, int Y)
     X40_position_cursor = X;
     Y2_position_cursor = Y;
 
-    char data[4]={Last_Controle_Byte,Function_Set_IS0,0x40+CGRAM,0x80+DDRAM};
+    CGRAM += 0x40;
+    DDRAM += 0x80;
+
+    char data[4]={Last_Controle_Byte,Function_Set_IS0,CGRAM,DDRAM};
     Interrupts_OFF;
     int ack = I2C::write(m_address, data, 4);
     Interrupts_ON;
@@ -315,8 +321,9 @@ char LCD_I2C::read(int X, int Y)
 
 int LCD_I2C::putnc(char *s,int n)
 {
+    if(n > 79) n = 79;
     int ack=0, i=0;
-    char data[n+1];
+    char data[80];
     data[0]=Register_Select_CByte;
     for(i=0; i<n; i++)
     {
