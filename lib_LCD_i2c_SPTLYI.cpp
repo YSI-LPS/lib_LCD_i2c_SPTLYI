@@ -323,7 +323,7 @@ int LCD_I2C::putnc(char *s,int n)
 {
     if(n > 79) n = 79;
     int ack=0, i=0;
-    char data[80];
+    char *data = (char *)calloc(n, sizeof(char));
     data[0]=Register_Select_CByte;
     for(i=0; i<n; i++)
     {
