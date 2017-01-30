@@ -13,19 +13,20 @@
 * #include "mbed.h"
 * #include "lib_LCD_i2c_SPTLYI.h"
 *
-* LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
-* 
+* LCD_I2C LCD;
+* //LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
+*
 * int main()
 * {
-*   while(1)
-*   {
-*       for(int i = 0; i < 9999; i++)
-*       {
-*           LCD.clear();
-*           LCD.print(i);
-*           wait(0.25);
-*       }
-*   }
+*     while(1)
+*     {
+*         for(int i = 0; i < 9999; i++)
+*         {
+*             LCD.clear();
+*             LCD.print(i);
+*             wait(0.25);
+*         }
+*     }
 * }
 * @endcode
 * @file          lib_LCD_i2c_SPTLYI.cpp
