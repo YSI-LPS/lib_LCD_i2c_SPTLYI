@@ -12,20 +12,21 @@
 * @code
 * #include "mbed.h"
 * #include "lib_LCD_i2c_SPTLYI.h"
-*
-* LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
 * 
+* LCD_I2C LCD;
+* //LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
+*
 * int main()
 * {
-*   while(1)
-*   {
-*       for(int i = 0; i < 9999; i++)
-*       {
-*           LCD.clear();
-*           LCD.print(i);
-*           wait(0.25);
-*       }
-*   }
+*     while(1)
+*     {
+*         for(int i = 0; i < 9999; i++)
+*         {
+*             LCD.clear();
+*             LCD.print(i);
+*             wait(0.25);
+*         }
+*     }
 * }
 * @endcode
 * @file          lib_LCD_i2c_SPTLYI.h 
@@ -45,13 +46,14 @@ class LCD_I2C : public I2C
 {
 public:
     /** Creer une instance LCD_I2C
+    * sur les pins sda, scl, rst avec 1 des 4 adresses possiblent 0x7C 0x7D 0x7E 0x7F
     *
-    * @param pin_sda par exemple p28
-    * @param pin_scl par exemple p27
-    * @param pin_rst par exemple p26
-    * @param address par exemple 0x7C
+    * @param pin_sda par defaut p28
+    * @param pin_scl par defaut p27
+    * @param pin_rst par defaut p26
+    * @param address par defaut 0x7C
     */
-    LCD_I2C(PinName pin_sda, PinName pin_scl, PinName pin_rst, int address);
+    LCD_I2C(PinName pin_sda = p28, PinName pin_scl = p27, PinName pin_rst = p26, int address = 0x7C);
 
     /** Efface l'afficheur et renvoie le curseur en position X = 0 et Y = 0
     *
@@ -72,7 +74,7 @@ public:
     * @param X est la position sur la ligne
     * @returns acknoledge write i2c
     */
-    int set_position_cursor(int X);
+    int set_position_cursor(int X=0);
     
     /** positionne le curseur horizontalement (0 à 39) et verticalement (0 à 1)
     *
@@ -80,7 +82,7 @@ public:
     * @param Y est la position sur la colone
     * @returns acknoledge write i2c
     */
-    int set_position_cursor(int X, int Y);
+    int set_position_cursor(int X=0, int Y=0);
     
     /** renvoie la position horizontale du curseur
     *
@@ -136,28 +138,28 @@ public:
     * @param n est le nombre de déplacement du curseur
     * @returns aucun
     */
-    void shift_left_cursor(int n);
+    void shift_left_cursor(int n=1);
     
     /** déplace le curseur vers la droite
     *
     * @param n est le nombre de déplacement du curseur
     * @returns aucun
     */
-    void shift_right_cursor(int n);
+    void shift_right_cursor(int n=1);
     
     /** déplace l'affichage vers la gauche
     *
     * @param n est le nombre de déplacement de l'affichage
     * @returns aucun
     */
-    void shift_left_display(int n);
+    void shift_left_display(int n=1);
     
     /** déplace l'affichage vers la droite
     *
     * @param n est le nombre de déplacement de l'affichage
     * @returns aucun
     */
-    void shift_right_display(int n);
+    void shift_right_display(int n=1);
     
     /** active le déplacement automatique de l'affichage vers la droite
     *
