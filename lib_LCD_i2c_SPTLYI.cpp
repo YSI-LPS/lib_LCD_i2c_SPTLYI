@@ -1,8 +1,42 @@
+/** LCD i2c SPTLYI class
+*
+* @purpose       library for i2c LCD
+*
+* Utilisée pour écrire sur l'afficheur i2c SPTLYI 2x16.
+*
+* http://fr.farnell.com/midas/mccog21605b6w-sptlyi/lcd-cog-2x16-stn-vert-b-l-i2c/dp/2063208
+*
+* Copyright (c) 2014, cstyles (http://mbed.org)
+*
+* Exemple:
+* @code
+* #include "mbed.h"
+* #include "lib_LCD_i2c_SPTLYI.h"
+*
+* LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
+* 
+* int main()
+* {
+*   while(1)
+*   {
+*       for(int i = 0; i < 9999; i++)
+*       {
+*           LCD.clear();
+*           LCD.print(i);
+*           wait(0.25);
+*       }
+*   }
+* }
+* @endcode
+* @file          lib_LCD_i2c_SPTLYI.cpp
+* @date          Jan 2014
+* @author        Yannic Simon
+*/
 #include "lib_LCD_i2c_SPTLYI.h"
 
 #define I2C_Frequency 200000
-#define Interrupts_OFF __disable_irq()    // Disable Interrupts
-#define Interrupts_ON __enable_irq()     // Enable Interrupts
+#define Interrupts_OFF __disable_irq()
+#define Interrupts_ON __enable_irq()
 #define Last_Controle_Byte 0x00
 #define First_Controle_Byte 0x80
 #define Register_Select_CByte 0x40
