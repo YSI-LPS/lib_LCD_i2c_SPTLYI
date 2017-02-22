@@ -74,7 +74,7 @@ public:
     * @param X est la position sur la ligne
     * @returns acknoledge write i2c
     */
-    int set_position_cursor(int X=0);
+    int set_position_cursor(int X);
     
     /** positionne le curseur horizontalement (0 à 39) et verticalement (0 à 1)
     *
@@ -82,7 +82,7 @@ public:
     * @param Y est la position sur la colone
     * @returns acknoledge write i2c
     */
-    int set_position_cursor(int X=0, int Y=0);
+    int set_position_cursor(int X, int Y);
     
     /** renvoie la position horizontale du curseur
     *
@@ -211,319 +211,29 @@ public:
     */   
     char read(int X, int Y);
     
-    /** affiche la variable sur l'afficheur
+    /** affiche une variable sur l'afficheur
     *
-    * @param s la chaine de caractère à afficher
-    * @param ... les arguments à afficher
+    * @param ... la variable à afficher
     * @returns acknoledge write i2c
     */
-    int print(const char *s, ... );
-    int print(char *s);
-    int print(char c);
-    int print(char c1, char c2);
-    int print(char c1, char c2, char c3);
-    int print(short nb);
-    int print(unsigned short nb);
     int print(int nb);
     int print(unsigned int nb);
+    int print(short nb);
+    int print(unsigned short nb);
     int print(long long nb);
     int print(unsigned long long nb);
     int print(float nb);
     int print(double nb);
+    int print(char c);
+    int print(char *s);
     
-    /*int print(char *s, short nb);
-    int print(char *s, short nb1, short nb2);
-    int print(char *s, short nb1, unsigned short nb2);
-    int print(char *s, unsigned short nb1, short nb2);
-    int print(char *s, short nb1, int nb2);
-    int print(char *s, int nb1, short nb2);
-    int print(char *s, short nb1, unsigned int nb2);
-    int print(char *s, unsigned int nb1, short nb2);
-    int print(char *s, short nb1, long long nb2);
-    int print(char *s, long long nb1, short nb2);
-    int print(char *s, short nb1, unsigned long long nb2);
-    int print(char *s, unsigned long long nb1, short nb2);
-    int print(char *s, short nb1, float nb2);
-    int print(char *s, float nb1, short nb2);
-    int print(char *s, short nb1, double nb2);
-    int print(char *s, double nb1, short nb2);
-    int print(char *s, short nb1, short nb2, short nb3);
-    
-    int print(char *s, short nb1, short nb2, unsigned short nb3);
-    int print(char *s, short nb1, unsigned short nb2, short nb3);
-    int print(char *s, short nb1, unsigned short nb2, unsigned short nb3);
-    int print(char *s, unsigned short nb1, short nb2, short nb3);
-    int print(char *s, unsigned short nb1, short nb2, unsigned short nb3);
-    int print(char *s, unsigned short nb1, unsigned short nb2, short nb3);
-    
-    int print(char *s, short nb1, short nb2, int nb3);
-    int print(char *s, short nb1, int nb2, short nb3);
-    int print(char *s, short nb1, int nb2, int nb3);
-    int print(char *s, int nb1, short nb2, short nb3);
-    int print(char *s, int nb1, short nb2, int nb3);
-    int print(char *s, int nb1, int nb2, short nb3);
-    
-    int print(char *s, short nb1, short nb2, unsigned int nb3);
-    int print(char *s, short nb1, unsigned int nb2, short nb3);
-    int print(char *s, short nb1, unsigned int nb2, unsigned int nb3);
-    int print(char *s, unsigned int nb1, short nb2, short nb3);
-    int print(char *s, unsigned int nb1, short nb2, unsigned int nb3);
-    int print(char *s, unsigned int nb1, unsigned int nb2, short nb3);
-    
-    int print(char *s, short nb1, short nb2, long long nb3);
-    int print(char *s, short nb1, long long nb2, short nb3);
-    int print(char *s, short nb1, long long nb2, long long nb3);
-    int print(char *s, long long nb1, short nb2, short nb3);
-    int print(char *s, long long nb1, short nb2, long long nb3);
-    int print(char *s, long long nb1, long long nb2, short nb3);
-    
-    int print(char *s, short nb1, short nb2, unsigned long long nb3);
-    int print(char *s, short nb1, unsigned long long nb2, short nb3);
-    int print(char *s, short nb1, unsigned long long nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, short nb2, short nb3);
-    int print(char *s, unsigned long long nb1, short nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, unsigned long long nb2, short nb3);
-    
-    int print(char *s, short nb1, short nb2, float nb3);
-    int print(char *s, short nb1, float nb2, short nb3);
-    int print(char *s, short nb1, float nb2, float nb3);
-    int print(char *s, float nb1, short nb2, short nb3);
-    int print(char *s, float nb1, short nb2, float nb3);
-    int print(char *s, float nb1, float nb2, short nb3);
-    
-    int print(char *s, short nb1, short nb2, double nb3);
-    int print(char *s, short nb1, double nb2, short nb3);
-    int print(char *s, short nb1, double nb2, double nb3);
-    int print(char *s, double nb1, short nb2, short nb3);
-    int print(char *s, double nb1, short nb2, double nb3);
-    int print(char *s, double nb1, double nb2, short nb3);
-
-    
-    
-    int print(char *s, unsigned short nb);
-    int print(char *s, unsigned short nb1, unsigned short nb2);
-    int print(char *s, unsigned short nb1, int nb2);
-    int print(char *s, int nb1, unsigned short nb2);
-    int print(char *s, unsigned short nb1, unsigned int nb2);
-    int print(char *s, unsigned int nb1, unsigned short nb2);
-    int print(char *s, unsigned short nb1, long long nb2);
-    int print(char *s, long long nb1, unsigned short nb2);
-    int print(char *s, unsigned short nb1, unsigned long long nb2);
-    int print(char *s, unsigned long long nb1, unsigned short nb2);
-    int print(char *s, unsigned short nb1, float nb2);
-    int print(char *s, float nb1, unsigned short nb2);
-    int print(char *s, unsigned short nb1, double nb2);
-    int print(char *s, double nb1, unsigned short nb2);
-    int print(char *s, unsigned short nb1, unsigned short nb2, unsigned short nb3);
-    
-    int print(char *s, unsigned short nb1, unsigned short nb2, int nb3);
-    int print(char *s, unsigned short nb1, int nb2, unsigned short nb3);
-    int print(char *s, unsigned short nb1, int nb2, int nb3);
-    int print(char *s, int nb1, unsigned short nb2, unsigned short nb3);
-    int print(char *s, int nb1, unsigned short nb2, int nb3);
-    int print(char *s, int nb1, int nb2, unsigned short nb3);
-    
-    int print(char *s, unsigned short nb1, unsigned short nb2, unsigned int nb3);
-    int print(char *s, unsigned short nb1, unsigned int nb2, unsigned short nb3);
-    int print(char *s, unsigned short nb1, unsigned int nb2, unsigned int nb3);
-    int print(char *s, unsigned int nb1, unsigned short nb2, unsigned short nb3);
-    int print(char *s, unsigned int nb1, unsigned short nb2, unsigned int nb3);
-    int print(char *s, unsigned int nb1, unsigned int nb2, unsigned short nb3);
-    
-    int print(char *s, unsigned short nb1, unsigned short nb2, long long nb3);
-    int print(char *s, unsigned short nb1, long long nb2, unsigned short nb3);
-    int print(char *s, unsigned short nb1, long long nb2, long long nb3);
-    int print(char *s, long long nb1, unsigned short nb2, unsigned short nb3);
-    int print(char *s, long long nb1, unsigned short nb2, long long nb3);
-    int print(char *s, long long nb1, long long nb2, unsigned short nb3);
-    
-    int print(char *s, unsigned short nb1, unsigned short nb2, unsigned long long nb3);
-    int print(char *s, unsigned short nb1, unsigned long long nb2, unsigned short nb3);
-    int print(char *s, unsigned short nb1, unsigned long long nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, unsigned short nb2, unsigned short nb3);
-    int print(char *s, unsigned long long nb1, unsigned short nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, unsigned long long nb2, unsigned short nb3);
-    
-    int print(char *s, unsigned short nb1, unsigned short nb2, float nb3);
-    int print(char *s, unsigned short nb1, float nb2, unsigned short nb3);
-    int print(char *s, unsigned short nb1, float nb2, float nb3);
-    int print(char *s, float nb1, unsigned short nb2, unsigned short nb3);
-    int print(char *s, float nb1, unsigned short nb2, float nb3);
-    int print(char *s, float nb1, float nb2, unsigned short nb3);
-    
-    int print(char *s, unsigned short nb1, unsigned short nb2, double nb3);
-    int print(char *s, unsigned short nb1, double nb2, unsigned short nb3);
-    int print(char *s, unsigned short nb1, double nb2, double nb3);
-    int print(char *s, double nb1, unsigned short nb2, unsigned short nb3);
-    int print(char *s, double nb1, unsigned short nb2, double nb3);
-    int print(char *s, double nb1, double nb2, unsigned short nb3);
-    
- 
-    
-    int print(char *s, int nb);
-    int print(char *s, int nb1, int nb2);
-    int print(char *s, int nb1, unsigned int nb2);
-    int print(char *s, unsigned int nb1, int nb2);
-    int print(char *s, int nb1, long long nb2);
-    int print(char *s, long long nb1, int nb2);
-    int print(char *s, int nb1, unsigned long long nb2);
-    int print(char *s, unsigned long long nb1, int nb2);
-    int print(char *s, int nb1, float nb2);
-    int print(char *s, float nb1, int nb2);
-    int print(char *s, int nb1, double nb2);
-    int print(char *s, double nb1, int nb2);
-    int print(char *s, int nb1, int nb2, int nb3);
-    
-    int print(char *s, int nb1, int nb2, unsigned int nb3);
-    int print(char *s, int nb1, unsigned int nb2, int nb3);
-    int print(char *s, int nb1, unsigned int nb2, unsigned int nb3);
-    int print(char *s, unsigned int nb1, int nb2, int nb3);
-    int print(char *s, unsigned int nb1, int nb2, unsigned int nb3);
-    int print(char *s, unsigned int nb1, unsigned int nb2, int nb3);
-    
-    int print(char *s, int nb1, int nb2, long long nb3);
-    int print(char *s, int nb1, long long nb2, int nb3);
-    int print(char *s, int nb1, long long nb2, long long nb3);
-    int print(char *s, long long nb1, int nb2, int nb3);
-    int print(char *s, long long nb1, int nb2, long long nb3);
-    int print(char *s, long long nb1, long long nb2, int nb3);
-    
-    int print(char *s, int nb1, int nb2, unsigned long long nb3);
-    int print(char *s, int nb1, unsigned long long nb2, int nb3);
-    int print(char *s, int nb1, unsigned long long nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, int nb2, int nb3);
-    int print(char *s, unsigned long long nb1, int nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, unsigned long long nb2, int nb3);
-    
-    int print(char *s, int nb1, int nb2, float nb3);
-    int print(char *s, int nb1, float nb2, int nb3);
-    int print(char *s, int nb1, float nb2, float nb3);
-    int print(char *s, float nb1, int nb2, int nb3);
-    int print(char *s, float nb1, int nb2, float nb3);
-    int print(char *s, float nb1, float nb2, int nb3);
-    
-    int print(char *s, int nb1, int nb2, double nb3);
-    int print(char *s, int nb1, double nb2, int nb3);
-    int print(char *s, int nb1, double nb2, double nb3);
-    int print(char *s, double nb1, int nb2, int nb3);
-    int print(char *s, double nb1, int nb2, double nb3);
-    int print(char *s, double nb1, double nb2, int nb3);
-    
-    
-    int print(char *s, unsigned int nb);
-    int print(char *s, unsigned int nb1, unsigned int nb2);
-    int print(char *s, unsigned int nb1, long long nb2);
-    int print(char *s, long long nb1, unsigned int nb2);
-    int print(char *s, unsigned int nb1, unsigned long long nb2);
-    int print(char *s, unsigned long long nb1, unsigned int nb2);
-    int print(char *s, unsigned int nb1, float nb2);
-    int print(char *s, float nb1, unsigned int nb2);
-    int print(char *s, unsigned int nb1, double nb2);
-    int print(char *s, double nb1, unsigned int nb2);
-    int print(char *s, unsigned int nb1, unsigned int nb2, unsigned int nb3);
-    
-    int print(char *s, unsigned int nb1, unsigned int nb2, long long nb3);
-    int print(char *s, unsigned int nb1, long long nb2, unsigned int nb3);
-    int print(char *s, unsigned int nb1, long long nb2, long long nb3);
-    int print(char *s, long long nb1, unsigned int nb2, unsigned int nb3);
-    int print(char *s, long long nb1, unsigned int nb2, long long nb3);
-    int print(char *s, long long nb1, long long nb2, unsigned int nb3);
-    
-    int print(char *s, unsigned int nb1, unsigned int nb2, unsigned long long nb3);
-    int print(char *s, unsigned int nb1, unsigned long long nb2, unsigned int nb3);
-    int print(char *s, unsigned int nb1, unsigned long long nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, unsigned int nb2, unsigned int nb3);
-    int print(char *s, unsigned long long nb1, unsigned int nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, unsigned long long nb2, unsigned int nb3);
-    
-    int print(char *s, unsigned int nb1, unsigned int nb2, float nb3);
-    int print(char *s, unsigned int nb1, float nb2, unsigned int nb3);
-    int print(char *s, unsigned int nb1, float nb2, float nb3);
-    int print(char *s, float nb1, unsigned int nb2, unsigned int nb3);
-    int print(char *s, float nb1, unsigned int nb2, float nb3);
-    int print(char *s, float nb1, float nb2, unsigned int nb3);
-    
-    int print(char *s, unsigned int nb1, unsigned int nb2, double nb3);
-    int print(char *s, unsigned int nb1, double nb2, unsigned int nb3);
-    int print(char *s, unsigned int nb1, double nb2, double nb3);
-    int print(char *s, double nb1, unsigned int nb2, unsigned int nb3);
-    int print(char *s, double nb1, unsigned int nb2, double nb3);
-    int print(char *s, double nb1, double nb2, unsigned int nb3);
-    
-    
-    int print(char *s, long long nb);
-    int print(char *s, long long nb1, long long nb2);
-    int print(char *s, long long nb1, unsigned long long nb2);
-    int print(char *s, unsigned long long nb1, long long nb2);
-    int print(char *s, long long nb1, float nb2);
-    int print(char *s, float nb1, long long nb2);
-    int print(char *s, long long nb1, double nb2);
-    int print(char *s, double nb1, long long nb2);
-    int print(char *s, long long nb1, long long nb2, long long nb3);
-    
-    int print(char *s, long long nb1, long long nb2, unsigned long long nb3);
-    int print(char *s, long long nb1, unsigned long long nb2, long long nb3);
-    int print(char *s, long long nb1, unsigned long long nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, long long nb2, long long nb3);
-    int print(char *s, unsigned long long nb1, long long nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, unsigned long long nb2, long long nb3);
-    
-    int print(char *s, long long nb1, long long nb2, float nb3);
-    int print(char *s, long long nb1, float nb2, long long nb3);
-    int print(char *s, long long nb1, float nb2, float nb3);
-    int print(char *s, float nb1, long long nb2, long long nb3);
-    int print(char *s, float nb1, long long nb2, float nb3);
-    int print(char *s, float nb1, float nb2, long long nb3);
-    
-    int print(char *s, long long nb1, long long nb2, double nb3);
-    int print(char *s, long long nb1, double nb2, long long nb3);
-    int print(char *s, long long nb1, double nb2, double nb3);
-    int print(char *s, double nb1, long long nb2, long long nb3);
-    int print(char *s, double nb1, long long nb2, double nb3);
-    int print(char *s, double nb1, double nb2, long long nb3);
-    
-    
-    int print(char *s, unsigned long long nb);
-    int print(char *s, unsigned long long nb1, unsigned long long nb2);
-    int print(char *s, unsigned long long nb1, float nb2);
-    int print(char *s, float nb1, unsigned long long nb2);
-    int print(char *s, unsigned long long nb1, double nb2);
-    int print(char *s, double nb1, unsigned long long nb2);
-    int print(char *s, unsigned long long nb1, unsigned long long nb2, unsigned long long nb3);
-    
-    int print(char *s, unsigned long long nb1, unsigned long long nb2, float nb3);
-    int print(char *s, unsigned long long nb1, float nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, float nb2, float nb3);
-    int print(char *s, float nb1, unsigned long long nb2, unsigned long long nb3);
-    int print(char *s, float nb1, unsigned long long nb2, float nb3);
-    int print(char *s, float nb1, float nb2, unsigned long long nb3);
-    
-    int print(char *s, unsigned long long nb1, unsigned long long nb2, double nb3);
-    int print(char *s, unsigned long long nb1, double nb2, unsigned long long nb3);
-    int print(char *s, unsigned long long nb1, double nb2, double nb3);
-    int print(char *s, double nb1, unsigned long long nb2, unsigned long long nb3);
-    int print(char *s, double nb1, unsigned long long nb2, double nb3);
-    int print(char *s, double nb1, double nb2, unsigned long long nb3);
-    
-    
-    int print(char *s, float nb);
-    int print(char *s, float nb1, float nb2);
-    int print(char *s, float nb1, double nb2);
-    int print(char *s, double nb1, float nb2);
-    int print(char *s, float nb1, float nb2, float nb3);
-    
-    int print(char *s, float nb1, float nb2, double nb3);
-    int print(char *s, float nb1, double nb2, float nb3);
-    int print(char *s, float nb1, double nb2, double nb3);
-    int print(char *s, double nb1, float nb2, float nb3);
-    int print(char *s, double nb1, float nb2, double nb3);
-    int print(char *s, double nb1, double nb2, float nb3);
-    
-    
-    int print(char *s, double nb);
-    int print(char *s, double nb1, double nb2);
-    int print(char *s, double nb1, double nb2, double nb3);*/
-    
+    /** affiche une chaine formaté sur l'afficheur
+    *
+    * @param s la chaine de format à afficher
+    * @param ... les arguments à afficher
+    * @returns acknoledge write i2c
+    */
+    int printf(const char *format, ... );
     
     private:
     DigitalInOut m_pin_rst;
@@ -532,7 +242,6 @@ public:
     int init(void);
     void reset(void);
     int putnc(char *s, int n);
-    int putnb2(int nb);
     
     void X_move_position(int n);
     int X40_position_cursor;
