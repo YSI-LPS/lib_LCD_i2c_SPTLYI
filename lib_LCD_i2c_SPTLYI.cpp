@@ -435,7 +435,7 @@ int LCD_I2C::print(char *s)
     return putnc(s,strlen(s));
 }
 
-int LCD_I2C::printf(const char *format, ... )
+int LCD_I2C::print(const char *format, ... )
 {
     int n=0;
     char buffer[256]={0};
