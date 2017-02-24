@@ -213,7 +213,7 @@ public:
     
     /** affiche une variable sur l'afficheur
     *
-    * @param ... la variable à afficher
+    * @param nb la variable à afficher
     * @returns acknoledge write i2c
     */
     int print(int nb);
@@ -229,11 +229,11 @@ public:
     
     /** affiche une chaine formaté sur l'afficheur
     *
-    * @param s la chaine de format à afficher
+    * @param format la chaine de format à afficher
     * @param ... les arguments à afficher
     * @returns acknoledge write i2c
     */
-    int printf(const char *format, ... );
+    int print(const char *format, ... );
     
     private:
     DigitalInOut m_pin_rst;
