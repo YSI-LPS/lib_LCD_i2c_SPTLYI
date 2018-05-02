@@ -458,9 +458,9 @@ int LCD_I2C::putnc(char *s,int n)
         data[i+1] = s[i];
         LCD_Data_Register[X80_position_cursor+i] = s[i];
     }
-    Interrupts_OFF;
+    //Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     ack = I2C::write(m_address, data, n+1);
-    Interrupts_ON;
+    //Interrupts_ON;
     X_move_position(n);
     free(data);
     return ack;
