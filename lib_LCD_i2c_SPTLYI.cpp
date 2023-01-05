@@ -13,8 +13,7 @@
 * #include "mbed.h"
 * #include "lib_LCD_i2c_SPTLYI.h"
 *
-* LCD_I2C LCD;
-* //LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
+* LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
 *
 * int main()
 * {
@@ -24,7 +23,11 @@
 *         {
 *             LCD.clear();
 *             LCD.print(i);
-*             wait(0.25);
+*             #if MBED_MAJOR_VERSION > 5
+*             ThisThread::sleep_for(250ms);
+*             #else
+*             ThisThread::sleep_for(2500);
+*             #endif
 *         }
 *     }
 * }
@@ -35,7 +38,7 @@
 */
 #include "lib_LCD_i2c_SPTLYI.h"
 
-#define I2C_Frequency 200000
+#define I2C_Frequency 100000
 #define Interrupts_OFF __disable_irq()
 #define Interrupts_ON __enable_irq()
 #define Last_Controle_Byte 0x00
@@ -69,19 +72,29 @@ int LCD_I2C::init(void)
     I2C::frequency(I2C_Frequency);
 
     char data[12]={First_Controle_Byte,Function_Set_IS0,Last_Controle_Byte,Function_Set_IS1,Shift_Right_Cursor_Set,Contrast_Set,Power_Icon_Set,Follower_Controle_Set,Display_ON_Set,Clear_Display,Return_Home,Entry_Mode_Set};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 12);
-    // Interrupts_ON;
-    wait_ms(1);
+    #if MBED_MAJOR_VERSION > 5
+    ThisThread::sleep_for(1ms);
+    #else
+    ThisThread::sleep_for(1000);
+    #endif
     return ack;
 }
 
 void LCD_I2C::reset(void)
 {
     m_pin_rst.output();
-    wait_ms(1);
+    #if MBED_MAJOR_VERSION > 5
+    ThisThread::sleep_for(1ms);
+    #else
+    ThisThread::sleep_for(1000);
+    #endif
     m_pin_rst.input();
-    wait_ms(1);
+    #if MBED_MAJOR_VERSION > 5
+    ThisThread::sleep_for(1ms);
+    #else
+    ThisThread::sleep_for(1000);
+    #endif
     X40_position_cursor = 0;
     X80_position_cursor = 0;
     Y2_position_cursor = 0;
@@ -90,58 +103,50 @@ void LCD_I2C::reset(void)
 int LCD_I2C::clear(void)
 {
     char data[2]={Last_Controle_Byte,Clear_Display};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     X40_position_cursor = 0;
     X80_position_cursor = 0;
     Y2_position_cursor = 0;
-    wait_ms(1);
+    #if MBED_MAJOR_VERSION > 5
+    ThisThread::sleep_for(1ms);
+    #else
+    ThisThread::sleep_for(1000);
+    #endif
     return ack;
 }
 
 int LCD_I2C::turn_on_cursor(void)
 {
     char data[2]={Last_Controle_Byte,Cursor_ON_Set};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     return ack;
 }
 
 int LCD_I2C::turn_off_cursor(void)
 {
     char data[2]={Last_Controle_Byte,Cursor_OFF_Set};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     return ack;
 }
 
 int LCD_I2C::turn_on_display(void)
 {
     char data[2]={Last_Controle_Byte,Display_ON_Set};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     return ack;
 }
 
 int LCD_I2C::turn_off_display(void)
 {
     char data[2]={Last_Controle_Byte,Display_OFF_Set};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     return ack;
 }
 
 int LCD_I2C::return_home_cursor(void)
 {
     char data[2]={Last_Controle_Byte,Return_Home};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     X40_position_cursor = 0;
     X80_position_cursor = 0;
     Y2_position_cursor = 0;
@@ -152,12 +157,7 @@ void LCD_I2C::shift_left_cursor(int n)
 {
     char data[3]={Last_Controle_Byte,Function_Set_IS0,Shift_Left_Cursor_Set};
     int i=0;
-    for(i=0;i<n;i++)
-    {
-        // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
-        I2C::write(m_address, data, 3);
-        // Interrupts_ON;
-    }
+    for(i=0;i<n;i++) I2C::write(m_address, data, 3);
     X_move_position(-n);
 }
 
@@ -165,21 +165,14 @@ void LCD_I2C::shift_right_cursor(int n)
 {
     char data[3]={Last_Controle_Byte,Function_Set_IS0,Shift_Right_Cursor_Set};
     int i=0;
-    for(i=0;i<n;i++)
-    {
-        // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
-        I2C::write(m_address, data, 3);
-        // Interrupts_ON;
-    }
+    for(i=0;i<n;i++) I2C::write(m_address, data, 3);
     X_move_position(n);
 }
 
 int LCD_I2C::shift_line_cursor(void)
 {
     char data[4]={Last_Controle_Byte,Function_Set_IS0,0x40+0x00,0x80+0x40};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 4);
-    // Interrupts_ON;
     X40_position_cursor = 0;
     X80_position_cursor = 0;
     Y2_position_cursor = 1;
@@ -211,9 +204,7 @@ int LCD_I2C::set_position_cursor(int X)
     DDRAM += 0x80;
 
     char data[4]={Last_Controle_Byte,Function_Set_IS0,CGRAM,DDRAM};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 4);
-    // Interrupts_ON;
     return ack;
 }
 
@@ -245,9 +236,7 @@ int LCD_I2C::set_position_cursor(int X, int Y)
     DDRAM += 0x80;
 
     char data[4]={Last_Controle_Byte,Function_Set_IS0,CGRAM,DDRAM};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 4);
-    // Interrupts_ON;
     return ack;
 }
 
@@ -255,68 +244,48 @@ void LCD_I2C::shift_left_display(int n)
 {
     char data[3]={Last_Controle_Byte,Function_Set_IS0,0x18};
     int i=0;
-    for(i=0;i<n;i++)
-    {
-        // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
-        I2C::write(m_address, data, 3);
-        // Interrupts_ON;
-    }
+    for(i=0;i<n;i++) I2C::write(m_address, data, 3);
 }
 
 void LCD_I2C::shift_right_display(int n)
 {
     char data[3]={Last_Controle_Byte,Function_Set_IS0,0x1C};
     int i=0;
-    for(i=0;i<n;i++)
-    {
-        // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
-        I2C::write(m_address, data, 3);
-        // Interrupts_ON;
-    }
+    for(i=0;i<n;i++) I2C::write(m_address, data, 3);
 }
 
 int LCD_I2C::enable_auto_shift_right_display(void)
 {
     char data[2]={Last_Controle_Byte,0x05};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     return ack;
 }
 
 int LCD_I2C::enable_auto_shift_left_display(void)
 {
     char data[2]={Last_Controle_Byte,0x07};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     return ack;
 }
 
 int LCD_I2C::disable_auto_shift_display(void)
 {
     char data[2]={Last_Controle_Byte,0x06};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     return ack;
 }
 
 int LCD_I2C::auto_shift_right_cursor(void)
 {
     char data[2]={Last_Controle_Byte,0x06};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     return ack;
 }
 
 int LCD_I2C::auto_shift_left_cursor(void)
 {
     char data[2]={Last_Controle_Byte,0x04};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     return ack;
 }
 
@@ -357,9 +326,7 @@ char LCD_I2C::read(int X, int Y)
 int LCD_I2C::print(char c)
 {
     char data[2]={Register_Select_CByte,c};
-    // Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     int ack = I2C::write(m_address, data, 2);
-    // Interrupts_ON;
     LCD_Data_Register[X80_position_cursor] = c;
     X_move_position(1);
     return ack;
@@ -458,9 +425,7 @@ int LCD_I2C::putnc(char *s,int n)
         data[i+1] = s[i];
         LCD_Data_Register[X80_position_cursor+i] = s[i];
     }
-    //Interrupts_OFF;   // Interdit depuis 2018 si I2C utilise en interrupt
     ack = I2C::write(m_address, data, n+1);
-    //Interrupts_ON;
     X_move_position(n);
     free(data);
     return ack;
