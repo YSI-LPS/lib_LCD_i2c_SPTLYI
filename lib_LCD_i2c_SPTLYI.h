@@ -13,8 +13,7 @@
 * #include "mbed.h"
 * #include "lib_LCD_i2c_SPTLYI.h"
 * 
-* LCD_I2C LCD;
-* //LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
+* LCD_I2C LCD(p28, p27, p26, 0x7C);  //sda, scl, rst, only 4 slave address 0x7C 0x7D 0x7E 0x7F
 *
 * int main()
 * {
@@ -24,7 +23,11 @@
 *         {
 *             LCD.clear();
 *             LCD.print(i);
-*             wait(0.25);
+*             #if MBED_MAJOR_VERSION > 5
+*             ThisThread::sleep_for(250ms);
+*             #else
+*             ThisThread::sleep_for(2500);
+*             #endif
 *         }
 *     }
 * }
@@ -33,7 +36,6 @@
 * @date          Jan 2014
 * @author        Yannic Simon
 */
-
 #ifndef DEF_lib_LCD_i2c_SPTLYI_H
 #define DEF_lib_LCD_i2c_SPTLYI_H
 
@@ -53,7 +55,7 @@ public:
     * @param pin_rst par defaut p26
     * @param address par defaut 0x7C
     */
-    LCD_I2C(PinName pin_sda = p28, PinName pin_scl = p27, PinName pin_rst = p26, int address = 0x7C);
+    LCD_I2C(PinName pin_sda, PinName pin_scl, PinName pin_rst, int address = 0x7C);
 
     /** Efface l'afficheur et renvoie le curseur en position X = 0 et Y = 0
     *
